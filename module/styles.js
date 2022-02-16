@@ -1,0 +1,137 @@
+import styled from 'styled-components';
+
+const fullHeight = `
+  height: 100vh;
+  height: calc(var(--vh, 1vh) * 100);
+`;
+
+function getOuterLeft(props) {
+  if (props.showLeft) {
+    return props.leftWidth;
+  }
+  if (props.showRight) {
+    return `-${props.rightWidth}`;
+  }
+  return '0';
+}
+
+function setOuterMoveProperties(props) {
+  if (props.transitionProp === 'transform') {
+    return `
+      transition: transform ${props.speed}ms ${props.transitionEasing};
+      will-change: transform;
+      transform: translate3d(${getOuterLeft(props)}, 0, 0);
+    `;
+  }
+
+  return `
+    transition: left ${props.speed}ms ${props.transitionEasing};
+    will-change: left;
+    left: ${getOuterLeft(props)};
+  `;
+}
+
+function setMoveProperties(side) {
+  return props => {
+    const width = parseInt(props.width, 10);
+    let value = 0;
+
+    if (props.transitionProp === 'transform') {
+      return `
+        ${side}: -${width}px;
+      `;
+    }
+
+    if (!props.show) {
+      value = width;
+    }
+
+    return `
+      ${side}: -${value}px;
+      transition: ${side} ${props.speed}ms ${props.transitionEasing};
+      will-change: ${side};
+    `;
+  };
+}
+
+function getContentOverflowX(props) {
+  if (props.showLeft || props.showRight) {
+    return 'hidden';
+  }
+  return 'visible';
+}
+
+export const Outer = styled.div.attrs({
+  className: 'osspim-layout'
+})`
+  position: relative;
+  ${setOuterMoveProperties};
+`;
+
+export const Content = styled.div.attrs({
+  className: 'osspim-layout__content'
+})`
+  position: relative;
+  z-index: 2;
+  overflow-x: ${getContentOverflowX};
+  background: ${p => p.background};
+  ${p =>
+    p.blurContentOnShow &&
+    `
+    transition: filter ${p => p.speed}ms ${p => p.transitionEasing};
+  `};
+  ${p =>
+    p.blurContentOnShow &&
+    (p.leftShown || p.rightShown) &&
+    `
+    filter: blur(${p.blurContentOnShow});
+  `};
+`;
+
+export const Left = styled.div.attrs({
+  className: 'osspim-layout__menu osspim-layout__menu--left'
+})`
+  position: fixed;
+  top: 0;
+  z-index: 1;
+  ${fullHeight}
+  overflow-x: hidden;
+  overflow-y: auto;
+  width: ${p => p.width || '300px'};
+  ${setMoveProperties('left')};
+`;
+
+export const Right = styled.div.attrs({
+  className: 'osspim-layout__menu osspim-layout__menu--right'
+})`
+  position: fixed;
+  top: 0;
+  z-index: 1;
+  ${fullHeight}
+  overflow-x: hidden;
+  overflow-y: auto;
+  transition: right ${p => p.speed}ms ${p => p.transitionEasing};
+  width: ${p => p.width || '300px'};
+  ${setMoveProperties('right')};
+`;
+
+export const ClickOverlay = styled.div.attrs({
+  className: 'osspim-layout__click-overlay'
+})`
+  position: fixed;
+  top: 0;
+  ${fullHeight}
+  width: 100vw;
+  z-index: 3;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+
+  ${function getTransitionProps(props) {
+    if (props.transitionProp === 'transform') {
+      return 'left: 0;';
+    }
+
+    return `
+      left: ${getOuterLeft(props)}
+    `;
+  }};
+`;
